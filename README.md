@@ -1,4 +1,4 @@
-# ${1:Team 9}
+# Team 9
 Project description
 
 ## Members
