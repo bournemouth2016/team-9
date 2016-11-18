@@ -4,5 +4,5 @@ Project description
 ## Members
 - Konstantinos
 - Marios
-- Kenneth
+- Wesley
 - Stylianos
