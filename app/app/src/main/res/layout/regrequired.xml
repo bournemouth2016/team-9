@@ -3,7 +3,8 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp">
+    android:padding="10dp"
+    android:id="@+id/layoutReq">
 
     <android.support.design.widget.TextInputLayout
         android:id="@+id/input_layout_fname"
@@ -43,10 +44,10 @@
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/enterName"
+            android:id="@+id/enterLocation"
             android:hint="@string/location"
             android:layout_gravity="center_horizontal"
-            android:inputType="numberDecimal"/>
+            android:inputType="text"/>
 
     </android.support.design.widget.TextInputLayout>
 
