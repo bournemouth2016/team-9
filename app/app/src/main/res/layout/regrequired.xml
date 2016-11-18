@@ -76,7 +76,7 @@
             android:id="@+id/enterPass"
             android:hint="@string/password"
             android:layout_gravity="center_horizontal"
-            android:inputType="numberDecimal"/>
+            android:inputType="textPassword"/>
 
     </android.support.design.widget.TextInputLayout>
 
@@ -91,7 +91,7 @@
             android:id="@+id/enterRPass"
             android:hint="@string/rpassword"
             android:layout_gravity="center_horizontal"
-            android:inputType="numberDecimal"/>
+            android:inputType="textPassword"/>
 
     </android.support.design.widget.TextInputLayout>
 

@@ -17,22 +17,39 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|center_horizontal"
-        android:text="@string/welcome" />
+        android:text="@string/welcome"
+        android:textSize="20dp"
+        android:textStyle="bold"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:text="@string/login"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_weight="0.5"
+            android:id="@+id/btnLogin" />
+
+        <Button
+            android:text="@string/register"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_weight="0.5"
+            android:id="@+id/btnRegister" />
+
+    </LinearLayout>
 
     <ImageView
         android:layout_width="fill_parent"
-        android:layout_height="100dp"
+        android:layout_height="300dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
         app:srcCompat="@drawable/app_icon"
         android:id="@+id/imgLogo" />
-
-    <Button
-        android:text="@string/register"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:id="@+id/btnRegister" />
-
 
 </LinearLayout>

@@ -9,4 +9,9 @@
     <string name="password">Password</string>
     <string name="rpassword">Repeat password</string>
     <string name="cregister">Complete Registration</string>
+    <string name="imgboat">Tap image above to take a picture of your boat</string>
+    <string name="phone">Phone number</string>
+    <string name="vesseltype">Boat Type</string>
+    <string name="maxcap">Maximum capacity of boat</string>
+    <string name="login">Log in</string>
 </resources>
