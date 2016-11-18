@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        app:srcCompat="@mipmap/ic_launcher"
+        android:id="@+id/imgBoat" />
+
+    <TextView
+        android:text="@string/imgboat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:id="@+id/txtBoatImage" />
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/input_layout_phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/enterPhone"
+            android:hint="@string/phone"
+            android:layout_gravity="center_horizontal"
+            android:inputType="phone"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/input_layout_vesseltype"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/enterVesselType"
+            android:hint="@string/vesseltype"
+            android:layout_gravity="center_horizontal"
+            android:inputType="text"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/input_layout_maxcap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/enterMaxCap"
+            android:hint="@string/maxcap"
+            android:layout_gravity="center_horizontal"
+            android:inputType="number"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <Button
+        android:text="@string/cregister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:id="@+id/btnCRegister" />
+
+
+
+
+</LinearLayout>

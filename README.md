@@ -4,7 +4,7 @@ Project description
 ## Members
 - Konstantinos
 - Marios
-- Wesley
+- Kenneth
 - Stylianos
 
 Api: AIzaSyCNubwDzGzQ762X22dnh-rvn7btvjrrYBk
