@@ -2,6 +2,7 @@
 Project description
 
 ## Members
-- Dennis Parchkov
-- Ekrem Yurdakul
-- Altay Adademir
+- Konstantinos
+- Marios
+- Kenneth
+- Stylianos
