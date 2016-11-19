@@ -140,6 +140,15 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                 r.printStackTrace();
             }
         }
+        if(v.getId()==R.id.btnRescue){
+            try{
+                Intent map = new Intent(this, Map.class);
+                startActivity(map);
+            }
+            catch (Exception r){
+                r.printStackTrace();
+            }
+        }
     }
 
     @Override

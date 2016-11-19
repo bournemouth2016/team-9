@@ -183,6 +183,7 @@ public class RegRequired extends Fragment implements View.OnClickListener{
                         SharedPreferences pref = getActivity().getSharedPreferences("MyPref", 1); // 0 - for private mode
                         SharedPreferences.Editor editor = pref.edit();
                         editor.putString("phone", enterphone.getText().toString());
+                        editor.commit();
 
                         System.out.println("Phone is saved: "+enterphone.getText().toString());
 
