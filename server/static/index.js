@@ -17,10 +17,21 @@ ws.onopen = function(){
   }).addTo(mymap);
 
   ws.onmessage = function(event) {
-  var value = JSON.parse(event.data)['key'];
-  console.log(JSON.parse(event.data)['key'])
-  var marker = L.marker([51.5, -0.09]).addTo(mymap);
-  marker.bindPopup("<strong>Name: </strong>" + value + " <br><strong>Telephone:</strong>").openPopup();
+    data_json = JSON.parse(event.data)
+    if(data_json.hasOwnProperty('results')){
+        for (i in data_json['results']){
+
+              // console.log(data_json['results'][i]);
+              var marker = L.marker(data_json['results'][i]).addTo(mymap);
+              marker.bindPopup("<strong>Name: </strong>"  + " <br><strong>Telephone:</strong>").openPopup();
+        }
+    }
+    else{
+        var new_marker = L.marker(data_json['coordinates']).addTo(mymap);
+    }
+  // var value = JSON.parse(event.data);
+  // console.log(value)
+  
 };
   // marker.on("click",function(event){
 
