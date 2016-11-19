@@ -2,6 +2,7 @@ package teamnine.pay.apps.teamnine;
 
 import android.*;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,6 +24,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -59,6 +62,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
     String response;
     String status;
+    String incID;
 
     JSONParser jsonParser = new JSONParser();
 
@@ -70,6 +74,8 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
     Button btnRescue;
     Button btnTrip;
+
+    PendingIntent resultPendingIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,7 +110,13 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     requestPermissions( permissions.toArray( new String[permissions.size()] ), 101 );
                 }
-                //return;
+
+                //check if coordinates passed to close
+                if(getIntent().getStringExtra("incID")!=null){
+                    System.out.println("I REACHED HERE");
+                    incID = getIntent().getStringExtra("incID").toString();
+                    new cancelDanger(incID).execute();
+                }
             }
             else{
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 100, this);
@@ -114,6 +126,39 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
             r.printStackTrace();
         }
 
+    }
+
+    public void onResume(){
+        super.onResume();
+        //check if coordinates passed to close
+        if(getIntent().getStringExtra("incID")!=null){
+            System.out.println("I REACHED HERE");
+            incID = getIntent().getStringExtra("incID").toString();
+            new cancelDanger(incID).execute();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.home_menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item){
+        if(item.getItemId()==R.id.action_logout){
+            //Check if logged in
+            SharedPreferences pref = getSharedPreferences("MyPref", 1); // 0 - for private mode
+            SharedPreferences.Editor editor = pref.edit();
+            editor.remove("phone");
+            editor.commit();
+
+            Intent main = new Intent(this, MainActivity.class);
+            startActivity(main);
+            finish();
+        }
+        return true;
     }
 
     @Override
@@ -134,7 +179,12 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
                         System.out.println("Coordinates: "+coords.toString());
 
-                        new sendEmergencyNotif(coords).execute();
+                        if(coords.size()>0){
+                            new sendEmergencyNotif(coords).execute();
+                        }
+                        else{
+                            Toast.makeText(getBaseContext(), "Could not get coordinates. Please try again", Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
                 myDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
@@ -239,6 +289,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                 // check for success tag
                 //success = json.getString("status");
                 response = json.getString("status");
+                incID = json.getString("incident_id");
                 System.out.println(response);
 
             } catch (Exception e) {
@@ -263,6 +314,16 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
                         System.out.println("Timestamp is: "+timestamp);
 
+                        Intent intentClose = new Intent(getBaseContext(), Home.class);
+                        intentClose.setAction("Close");
+                        intentClose.putExtra("incID", incID);
+                        intentClose.putExtra("notifID", Integer.parseInt(timestamp.toString()));
+                        resultPendingIntent = PendingIntent.getActivity(getBaseContext(),
+                                0,
+                                intentClose,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                        );
+
                         NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(getBaseContext())
                                 .setSmallIcon(R.drawable.app_icon)
                                 .setContentTitle("Help! Emergency!")
@@ -271,8 +332,15 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                                 .setVibrate(vibrate_ptn);
                         //.setOngoing(true);
                         //.setAutoCancel(true)
-                        //mBuilder.setContentIntent(resultPendingIntent);
+                        mBuilder.setContentIntent(resultPendingIntent);
                         nm.notify(Integer.parseInt(timestamp.toString()), mBuilder.build());
+
+                        //save incident ID to shared preferences
+                        SharedPreferences pref = getSharedPreferences("MyPref", 1); // 0 - for private mode
+                        SharedPreferences.Editor editor = pref.edit();
+                        editor.remove("incID");
+                        editor.putString("incID", incID);
+                        editor.commit();
 
                         //create dialog to help give more details
                         helpOnTheWay();
@@ -390,6 +458,74 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
         }
     }
 
+    class cancelDanger extends AsyncTask<String, String, String> {
+
+        public cancelDanger(String incidentID) {
+
+            //get stored incident ID
+            SharedPreferences pref = getSharedPreferences("MyPref", 1); // 0 - for private mode
+            String theincID = pref.getString("incID", null);
+
+            System.out.println("My incident ID: "+theincID);
+
+            details = new ArrayList<NameValuePair>();
+            details.add(new BasicNameValuePair("incident_id", theincID));
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //show progress dialog
+            dialog = new ProgressDialog(Home.this);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.setMessage("One moment...");
+            dialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                // getting JSON Object
+                JSONObject json = jsonParser.makeHttpRequest(Config.SERVER_URL+"canceldanger",
+                        "POST", details);
+
+                // check log cat fro response
+                Log.d("Create Response", json.toString());
+
+                // check for success tag
+                //success = json.getString("status");
+                response = json.getString("status");
+                System.out.println(response);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                response = "Connection error. Please try again";
+            }
+            return response;
+        }
+
+        protected void onPostExecute(String getResponse) {
+            // dismiss the dialog once done
+            try{
+                dialog.dismiss();
+                getResponse = response;
+                if(getResponse.equals("ok")){
+                    try{
+                        Toast.makeText(getBaseContext(), "Emergency alarm cancelled", Toast.LENGTH_LONG).show();
+                    }
+                    catch(Exception r){
+                        r.printStackTrace();
+                    }
+                }
+                else{
+                    Toast.makeText(getBaseContext(), "Problem retrieving people in danger. Please try again.", Toast.LENGTH_LONG).show();
+                }
+            }catch(Exception r){
+                r.printStackTrace();
+            }
+        }
+    }
+
     class getInDanger extends AsyncTask<String, String, String> {
 
         public getInDanger() {
@@ -469,6 +605,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                 public void onClick(DialogInterface dialog, int which) {
                     //Add details
                     Intent details = new Intent(getBaseContext(), Details.class);
+                    details.putExtra("coords", coords.toString());
                     startActivity(details);
                 }
             });

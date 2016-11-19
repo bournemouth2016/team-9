@@ -59,6 +59,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         layoutMain = (LinearLayout)findViewById(R.id.activity_main);
 
+        try{
+            //Check if logged in
+            SharedPreferences pref = getSharedPreferences("MyPref", 1); // 0 - for private mode
+            String myphone = pref.getString("phone", null);
+
+            if(myphone.length()>0 || myphone!=null){
+                Intent home = new Intent(this, Home.class);
+                startActivity(home);
+            }
+        }
+        catch(Exception r){
+            r.printStackTrace();
+        }
+
     }
 
     @Override

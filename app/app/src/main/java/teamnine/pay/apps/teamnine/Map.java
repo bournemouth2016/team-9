@@ -100,6 +100,9 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
                 passedLong = Double.parseDouble(getIntent().getStringExtra("Lon"));
             }
 
+            //get incidents of other people
+
+
         } catch (Exception r) {
             Toast.makeText(this, "Sorry your device does not support the map feature", Toast.LENGTH_LONG).show();
             r.printStackTrace();
