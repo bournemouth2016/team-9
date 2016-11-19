@@ -81,15 +81,28 @@ public class GCMIntent extends IntentService {
 
         Long timestamp = System.currentTimeMillis()/1000;
 
+        //convert gps to array
+        String [] dGPS = gps.replace("[", "").replace("]", "").split(",");
+        Intent intentClose = new Intent(getBaseContext(), Map.class);
+        intentClose.setAction("Rescue");
+        intentClose.putExtra("Lat", dGPS[0]);
+        intentClose.putExtra("Lon", dGPS[1]);
+        intentClose.putExtra("notifID", Integer.parseInt(timestamp.toString()));
+        resultPendingIntent = PendingIntent.getActivity(getBaseContext(),
+                0,
+                intentClose,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
         System.out.println("Timestamp is: "+timestamp);
 
         NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(getBaseContext())
                 .setSmallIcon(R.drawable.app_icon)
                 .setContentTitle("Alert!")
-                .setStyle(new NotificationCompat.BigTextStyle().bigText("Someone is in danger.\nPhone number: "+phonenum+
-                "\nCoordinates: "+gps))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText("Someone is in danger.\nPhone number: "+phonenum))
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setVibrate(vibrate_ptn);
+                .setVibrate(vibrate_ptn)
+                .addAction(R.drawable.mapicon, "View on map", resultPendingIntent);
                 //.setOngoing(true);
         //.setAutoCancel(true)
         //mBuilder.setContentIntent(resultPendingIntent);
