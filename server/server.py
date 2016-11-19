@@ -13,6 +13,8 @@ gsm_api_key = "AIzaSyCNubwDzGzQ762X22dnh-rvn7btvjrrYBk"
 # gsm_reg_ids = []
 gcm = GCM(gsm_api_key, debug=False)
 
+websocket_clients = set()
+
 def push_data(data,ids):
     response = gcm.plaintext_request(registration_id=ids, data=data)
     return response
@@ -89,6 +91,16 @@ class DangerHandler(tornado.web.RequestHandler):
             'gps': str(get_gps(gps)),
             },people)
 
+        boats = db['boats'].find({'phone':self.get_argument('phone','')})
+        owner = boats[0]['owner_fname'] + ' ' + boats[0]['owner_lname']
+
+        for ws_client in websocket_clients:
+            ws_client.write_message({
+                'coordinates':get_gps(gps),
+                'phone':self.get_argument('phone',''),
+                'owner':owner
+            })
+
         self.write({
             'status':'ok'
         })
@@ -151,13 +163,38 @@ class NrliReportHandler(tornado.web.RequestHandler):
             'total_responders': total_responders
         })
 
+class TripHandler(tornado.web.RequestHandler):
+    def post(self):
+        db['trips'].insert_one({
+            'phone': self.get_argument('phone',''),
+            'status': self.get_argument('status',''),
+            'time': self.get_argument('time',''),
+        })
+        self.write({'status':'ok'})
+
+
 class GetDangerHandler(tornado.web.RequestHandler):
     def get(self):
-        pass
+        response = db['incidents'].find({'status':'danger'})
+        results = []
+        for item in response:
+            results.append(item['gps']['coordinates'])
+        self.write({'results': results})
 
 class MapSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        self.write_message({"key":'value'})
+        websocket_clients.add(self)
+        response = db['incidents'].find({'status':'danger'})
+        results = []
+        for item in response:
+            boats = db['boats'].find({'phone':item['phone']})
+            owner = boats[0]['owner_fname'] + ' ' + boats[0]['owner_lname']
+            results.append({
+                'coordinates':item['gps']['coordinates'],
+                'phone':item['phone'],
+                'owner':owner
+            })
+        self.write_message({'results': results})
         print("WebSocket opened")
 
     def on_message(self, message):
@@ -165,6 +202,7 @@ class MapSocketHandler(tornado.websocket.WebSocketHandler):
         # self.write_message(u"You said: " + message)
 
     def on_close(self):
+        websocket_clients.remove(self)
         print("WebSocket closed")
 
 handlers = [
@@ -174,7 +212,8 @@ handlers = [
             (r"/login",LoginHandler),
             (r"/report-nrli",NrliReportHandler),
             (r"/map",MapSocketHandler),
-            (r"/get-danger",GetDangerHandler),
+            (r"/indanger",GetDangerHandler),
+            (r"/trip",TripHandler),
         ]
 
 settings = dict(
