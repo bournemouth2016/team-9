@@ -2,6 +2,7 @@ package teamnine.pay.apps.teamnine;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -117,7 +118,7 @@ public class RegRequired extends Fragment implements View.OnClickListener{
 
     class registerMe extends AsyncTask<String, String, String> {
 
-        public registerMe(String fname, String lname, String location, String boat, String password) {
+        public registerMe(String fname, String lname, String phone, String boat, String password) {
 
             details = new ArrayList<NameValuePair>();
             details.add(new BasicNameValuePair("owner_fname", fname));
@@ -125,7 +126,7 @@ public class RegRequired extends Fragment implements View.OnClickListener{
             details.add(new BasicNameValuePair("location", ""));
             details.add(new BasicNameValuePair("boat_name", boat));
             details.add(new BasicNameValuePair("password", password));
-            details.add(new BasicNameValuePair("phone", "123456"));
+            details.add(new BasicNameValuePair("phone", phone));
             details.add(new BasicNameValuePair("max_passengers", "0"));
             details.add(new BasicNameValuePair("vessel_type", ""));
         }
@@ -176,8 +177,15 @@ public class RegRequired extends Fragment implements View.OnClickListener{
             try{
                 dialog.dismiss();
                 getResponse = response;
-                if(response.equals("ok")){
+                if(getResponse.equals("ok")){
                     try{
+                        //Store phone number in sharedpref session
+                        SharedPreferences pref = getActivity().getSharedPreferences("MyPref", 1); // 0 - for private mode
+                        SharedPreferences.Editor editor = pref.edit();
+                        editor.putString("phone", enterphone.getText().toString());
+
+                        System.out.println("Phone is saved: "+enterphone.getText().toString());
+
                         Intent home = new Intent(getActivity(), Home.class);
                         startActivity(home);
                     }
