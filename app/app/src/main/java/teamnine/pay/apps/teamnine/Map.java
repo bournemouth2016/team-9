@@ -20,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -40,6 +41,9 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
 
     double myLat;
     double myLong;
+
+    double passedLat = 0;
+    double passedLong = 0;
 
     Marker myLocation;
 
@@ -68,10 +72,11 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
                     .addApi(LocationServices.API)
                     .build();
 
-            //add my location to search array for directions
-            //mySearchedNames.add("My current location");
-            //mySearchedLat.add(0.0);
-            //mySearchedLong.add(0.0);
+            //Get any passed/extra variables
+            if(getIntent().getStringExtra("Lat")!=null){
+                passedLat = Double.parseDouble(getIntent().getStringExtra("Lat"));
+                passedLong = Double.parseDouble(getIntent().getStringExtra("Lon"));
+            }
 
         } catch (Exception r) {
             Toast.makeText(this, "Sorry your device does not support the map feature", Toast.LENGTH_LONG).show();
@@ -82,14 +87,17 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
 
     @Override
     public void onLocationChanged(Location location) {
-        if(myLocation!=null){
+        /*if(myLocation!=null){
             myLocation.remove();
-        }
-        LatLng place = new LatLng(location.getLatitude(), location.getLongitude());
-        myLocation = mMap.addMarker(new MarkerOptions().position(place).title("You are here :-)"));
+        }*/
+        /*LatLng place = new LatLng(location.getLatitude(), location.getLongitude());
+        myLocation = mMap.addMarker(new MarkerOptions()
+                .position(place)
+                .title("You are here :-)")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         myLocation.setPosition(place);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(place));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(12));*/
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -156,14 +164,17 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
                     //buildAlertMessageNoGps();
                 }
                 else{
-                    LatLng myLoc = new LatLng(lat, lon);
+                    /*LatLng myLoc = new LatLng(lat, lon);
                     //mMap.clear();
                     if(myLocation!=null){
                         myLocation.remove();
                     }
-                    myLocation = mMap.addMarker(new MarkerOptions().position(myLoc).title("You are here :-)"));
+                    myLocation = mMap.addMarker(new MarkerOptions()
+                            .position(myLoc)
+                            .title("You are here :-)")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
-                    mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(12));*/
 
                 }
             } else {
@@ -200,13 +211,15 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
                     }
                 }
 
-                //TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-                //System.out.println("My country is: " + tm.getNetworkCountryIso().toString());
-
-                //LatLng place = new LatLng(-1.3047996, 36.7069645);
-                //mMap.addMarker(new MarkerOptions().position(place).title("Marker in Nairobi"));
-                //mMap.moveCamera(CameraUpdateFactory.newLatLng(place));
-                //mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+                if(passedLong!=0 || passedLat!=0){
+                    LatLng myLoc = new LatLng(passedLat, passedLong);
+                    myLocation = mMap.addMarker(new MarkerOptions()
+                            .position(myLoc)
+                            .title("Person in danger")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+                }
             }
 
         } catch (Exception r) {
