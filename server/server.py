@@ -1,5 +1,6 @@
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
 from pymongo import MongoClient
 import re
 from gcm import GCM
@@ -21,7 +22,8 @@ def get_gps(gps):
     gps_split = gps.split(',')
     gps_split[0] = gps_split[0].replace('[','')
     gps_split[1] = gps_split[1].replace(']','')
-    gps = [int(x) for x in gps_split]
+    gps = [float(x) for x in gps_split]
+    # print gps
     return gps
 
 class MainHandler(tornado.web.RequestHandler):
@@ -44,21 +46,49 @@ class DangerHandler(tornado.web.RequestHandler):
         else:
             casualties = None
 
+        gps_json = { 'type': 'Point', 'coordinates': get_gps(gps) }
+
         db['incidents'].insert_one({
             'phone': self.get_argument('phone',''),
-            'gps' : get_gps(gps),
+            'gps' : gps_json,
             # 'picture': self.get_argument('picture',''),
             'details': self.get_argument('details',''),
-            'gps' : get_gps(gps),
             'passengers': passengers,
             'casualties': casualties,
             'status': 'danger',
-            'rescue': ''
+            'rescuers': []
         })
 
-        res = db['boats'].find({'phone':self.get_argument('phone','')})
-        if res.count() == 1:
-            push_data({'ken':'gamikoulas'},res[0]['gcm_id'])
+        # res = db['boats'].find({'phone':self.get_argument('phone','')})
+        res = db['boats'].find({'phone':{'$ne':self.get_argument('phone','')}})
+        # res = db['boats'].find({
+        #     'gps':
+        #     {
+        #         '$near': {
+        #             '$geometry' :
+        #             {
+        #                 'type' : 'Point' ,
+        #                 'coordinates' : [get_gps(gps)[0], get_gps(gps)[1]]
+        #             }
+        #         }
+        #     }
+        # }).limit(10)
+
+        # print [get_gps(gps)[0], get_gps(gps)[1]]
+        # print res
+        # print res.next()
+        # print res.count()
+        if res.count() > 0:
+            people = [i['gcm_id'] for i in res]
+            print people
+            push_data({
+            'in_danger':self.get_argument('phone',''),
+            'gps':get_gps(gps),
+            },people)
+
+        self.write({
+            'status':'ok'
+        })
 
 
 class RegistrationHandler(tornado.web.RequestHandler):
@@ -105,14 +135,36 @@ class LoginHandler(tornado.web.RequestHandler):
 
 class NrliReportHandler(tornado.web.RequestHandler):
     def get(self):
-        pass
+        total_incidents = db['incidents'].find().count()
+        total_incidents_false = db['incidents'].find({'status':'false'}).count()
+        total_responders_list = db['incidents'].find({'rescuers': { '$gt': 0}})
+        total_responders = 0
+        for res in total_responders_list:
+            total_responders += len(res['rescuers'])
 
+        self.write({
+            'total_incidents': total_incidents,
+            'total_incidents_false': total_incidents_false,
+            'total_responders': total_responders
+        })
+
+class MapSocketHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
+        print("WebSocket opened")
+
+    def on_message(self, message):
+        self.write_message(u"You said: " + message)
+
+    def on_close(self):
+        print("WebSocket closed")
 
 handlers = [
             (r"/", MainHandler),
             (r"/danger",DangerHandler),
             (r"/register",RegistrationHandler),
             (r"/login",LoginHandler),
+            (r"/report-nrli",NrliReportHandler),
+            (r"/map",MapSocketHandler),
         ]
 
 
