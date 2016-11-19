@@ -5,3 +5,9 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     id: 'your.mapbox.project.id',
     accessToken: 'your.mapbox.public.access.token'
 }).addTo(mymap);
+
+var marker = L.marker([51.5, -0.09]).addTo(mymap);
+marker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+// marker.on("click",function(event){
+   
+// });
