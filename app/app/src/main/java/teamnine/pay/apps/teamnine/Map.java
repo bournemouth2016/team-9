@@ -2,15 +2,22 @@ package teamnine.pay.apps.teamnine;
 
 import android.*;
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -25,8 +32,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import teamnine.pay.apps.teamnine.connectors.Config;
+import teamnine.pay.apps.teamnine.connectors.JSONParser;
 
 /**
  * Created by kenneth on 11/19/16.
@@ -48,6 +62,14 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
     Marker myLocation;
 
     ArrayList<Double> coords = new ArrayList<>();
+
+    List<NameValuePair> details;
+
+    ProgressDialog dialog;
+
+    JSONParser jsonParser = new JSONParser();
+
+    String response;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,4 +248,5 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback, Locati
             r.printStackTrace();
         }
     }
+
 }

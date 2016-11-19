@@ -45,6 +45,9 @@
         <activity android:name=".Map">
 
         </activity>
+        <activity android:name=".Details">
+
+        </activity>
 
         <receiver android:name=".GcmBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >

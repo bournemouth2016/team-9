@@ -1,15 +1,18 @@
 package teamnine.pay.apps.teamnine;
 
 import android.*;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.RingtoneManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +20,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,6 +58,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
     List<NameValuePair> details;
 
     String response;
+    String status;
 
     JSONParser jsonParser = new JSONParser();
 
@@ -64,6 +69,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
     LinearLayout layoutHome;
 
     Button btnRescue;
+    Button btnTrip;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,9 +80,14 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
         panicButton = (ImageView) findViewById(R.id.imgPanic);
         panicButton.setOnClickListener(this);
 
+        btnTrip = (Button)findViewById(R.id.btnTrip);
+        btnTrip.setOnClickListener(this);
+
         btnRescue = (Button) findViewById(R.id.btnRescue);
         btnRescue.setText("People in danger: 0");
         btnRescue.setOnClickListener(this);
+
+        layoutHome = (LinearLayout)findViewById(R.id.layoutHome);
 
         try {
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -142,10 +153,24 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
         }
         if(v.getId()==R.id.btnRescue){
             try{
-                Intent map = new Intent(this, Map.class);
-                startActivity(map);
+                new getInDanger().execute();
             }
             catch (Exception r){
+                r.printStackTrace();
+            }
+        }
+        if(v.getId()==R.id.btnTrip){
+            try{
+                if(btnTrip.getText().toString().contains("Sail out")){
+                    status = "Leaving";
+                    new pingServer(status).execute();
+                }
+                else{
+                    status = "Returned";
+                    new pingServer(status).execute();
+                }
+            }
+            catch(Exception r){
                 r.printStackTrace();
             }
         }
@@ -230,6 +255,26 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                 getResponse = response;
                 if(getResponse.equals("ok")){
                     try{
+                        //create notification to help cancel emergency
+                        NotificationManager nm = (NotificationManager)getBaseContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                        long[] vibrate_ptn = {0, 100, 300, 500};
+
+                        Long timestamp = System.currentTimeMillis()/1000;
+
+                        System.out.println("Timestamp is: "+timestamp);
+
+                        NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(getBaseContext())
+                                .setSmallIcon(R.drawable.app_icon)
+                                .setContentTitle("Help! Emergency!")
+                                .setStyle(new NotificationCompat.BigTextStyle().bigText("Tap here to cancel your emergency help request."))
+                                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                                .setVibrate(vibrate_ptn);
+                        //.setOngoing(true);
+                        //.setAutoCancel(true)
+                        //mBuilder.setContentIntent(resultPendingIntent);
+                        nm.notify(Integer.parseInt(timestamp.toString()), mBuilder.build());
+
+                        //create dialog to help give more details
                         helpOnTheWay();
                     }
                     catch(Exception r){
@@ -244,6 +289,166 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
                         }
                     }).show();
+                }
+            }catch(Exception r){
+                r.printStackTrace();
+            }
+        }
+    }
+
+    class pingServer extends AsyncTask<String, String, String> {
+
+        public pingServer(String status) {
+            //get stored phone number
+            SharedPreferences pref = getSharedPreferences("MyPref", 1); // 0 - for private mode
+            String myphone = pref.getString("phone", null);
+
+            //get current timestamp
+            Long tsLong = System.currentTimeMillis()/1000;
+            String ts = tsLong.toString();
+
+            System.out.println("My phone: "+myphone);
+
+            details = new ArrayList<NameValuePair>();
+            details.add(new BasicNameValuePair("phone", myphone));
+            details.add(new BasicNameValuePair("status", status));
+            details.add(new BasicNameValuePair("time", ts));
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //show progress dialog
+            dialog = new ProgressDialog(Home.this);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.setMessage("One moment...");
+            dialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                // getting JSON Object
+                JSONObject json = jsonParser.makeHttpRequest(Config.SERVER_URL+"trip",
+                        "POST", details);
+
+                // check log cat fro response
+                Log.d("Create Response", json.toString());
+
+                // check for success tag
+                //success = json.getString("status");
+                response = json.getString("status");
+                System.out.println(response);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                response = "Connection error. Please try again";
+            }
+            return response;
+        }
+
+        protected void onPostExecute(String getResponse) {
+            // dismiss the dialog once done
+            try{
+                dialog.dismiss();
+                getResponse = response;
+                if(getResponse.equals("ok")){
+                    try{
+                        Snackbar.make(layoutHome, "Trip confirmed. Enjoy your trip and don't forget to press the trip button again once you return", Snackbar.LENGTH_LONG).setAction("Close", new View.OnClickListener(){
+
+                            @Override
+                            public void onClick(View v) {
+
+                            }
+                        }).show();
+
+                        if(status.equals("Leaving")){
+                            btnTrip.setText("Press this again to confirm return from trip");
+                            btnTrip.setTextColor(Color.parseColor("#2ECC71"));
+                        }
+                        else{
+                            btnTrip.setText("Sail out");
+                            btnTrip.setTextColor(Color.parseColor("#FFFFFF"));
+                        }
+                    }
+                    catch(Exception r){
+                        r.printStackTrace();
+                    }
+                }
+                else{
+                    Snackbar.make(layoutHome, "Error sending for help. Please try again.", Snackbar.LENGTH_LONG).setAction("Close", new View.OnClickListener(){
+
+                        @Override
+                        public void onClick(View v) {
+
+                        }
+                    }).show();
+                }
+            }catch(Exception r){
+                r.printStackTrace();
+            }
+        }
+    }
+
+    class getInDanger extends AsyncTask<String, String, String> {
+
+        public getInDanger() {
+
+            details = new ArrayList<NameValuePair>();
+            details.add(new BasicNameValuePair("getpeople", "getpeople"));
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //show progress dialog
+            dialog = new ProgressDialog(Home.this);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.setMessage("One moment...");
+            dialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                // getting JSON Object
+                JSONObject json = jsonParser.makeHttpRequest(Config.SERVER_URL+"indanger",
+                        "GET", details);
+
+                // check log cat fro response
+                Log.d("Create Response", json.toString());
+
+                // check for success tag
+                //success = json.getString("status");
+                response = json.getString("results");
+                System.out.println(response);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                response = "Connection error. Please try again";
+            }
+            return response;
+        }
+
+        protected void onPostExecute(String getResponse) {
+            // dismiss the dialog once done
+            try{
+                dialog.dismiss();
+                getResponse = response;
+                if(getResponse.length()>0){
+                    try{
+                        //String [] coords = response.replace("[", "").replace("]", "").split(",");
+                        //System.out.println("First one: "+coords[0].toString());
+                        Intent map = new Intent(getBaseContext(), Map.class);
+                        map.putExtra("coordinates", response);
+                        startActivity(map);
+                    }
+                    catch(Exception r){
+                        r.printStackTrace();
+                    }
+                }
+                else{
+                    Toast.makeText(getBaseContext(), "Problem retrieving people in danger. Please try again.", Toast.LENGTH_LONG).show();
                 }
             }catch(Exception r){
                 r.printStackTrace();

@@ -16,4 +16,18 @@
     <string name="login">Log in</string>
     <string name="pressemg">Press bell button to call for help</string>
     <string name="torescue">People in danger</string>
+    <string name="boatproblem">What problem are you facing?</string>
+    <string name="boatissue">Engine failure</string>
+    <string name="crewcap">Crew member drowning/overboard</string>
+    <string name="damagedboat">Damage to the boat</string>
+    <string name="crewnumber">How many members of your crew are in danger?</string>
+    <string name="onetwo">One to two</string>
+    <string name="twofive">Two to five</string>
+    <string name="fiveormore">More than five</string>
+    <string name="casualties">Are there any casualties?</string>
+    <string name="none">None</string>
+    <string name="onefive">One to five</string>
+    <string name="submit">Submit</string>
+    <string name="cancel">Cancel emergency</string>
+    <string name="trip">Sail out</string>
 </resources>

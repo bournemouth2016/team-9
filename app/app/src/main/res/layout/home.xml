@@ -30,11 +30,20 @@
             android:textSize="16sp"/>
 
         <Button
+            android:text="@string/trip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:id="@+id/btnTrip" />
+
+        <Button
             android:text="@string/torescue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:id="@+id/btnRescue" />
+            android:id="@+id/btnRescue"
+            android:textColor="#FF5733"
+            android:textStyle="bold"/>
 
 
     </LinearLayout>
