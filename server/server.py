@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import re
 from gcm import GCM
 import hashlib
+import os
 
 client = MongoClient('localhost',27017)
 db = client['codeforgood']
@@ -29,8 +30,8 @@ def get_gps(gps):
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         print "GET / request from", self.request.remote_ip
-        self.write("aada")
-        # self.render("home.html")
+        # self.write("aada")
+        self.render("index.html")
 
 class DangerHandler(tornado.web.RequestHandler):
     def post(self):
@@ -78,12 +79,14 @@ class DangerHandler(tornado.web.RequestHandler):
         # print res
         # print res.next()
         # print res.count()
+
+        print get_gps(gps)
         if res.count() > 0:
             people = [i['gcm_id'] for i in res]
             print people
             push_data({
-            'in_danger':self.get_argument('phone',''),
-            'gps':get_gps(gps),
+            'phone':self.get_argument('phone',''),
+            'gps': str(get_gps(gps)),
             },people)
 
         self.write({
@@ -148,12 +151,18 @@ class NrliReportHandler(tornado.web.RequestHandler):
             'total_responders': total_responders
         })
 
+class GetDangerHandler(tornado.web.RequestHandler):
+    def get(self):
+        pass
+
 class MapSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
+        self.write_message({"key":'value'})
         print("WebSocket opened")
 
     def on_message(self, message):
-        self.write_message(u"You said: " + message)
+        pass
+        # self.write_message(u"You said: " + message)
 
     def on_close(self):
         print("WebSocket closed")
@@ -165,11 +174,15 @@ handlers = [
             (r"/login",LoginHandler),
             (r"/report-nrli",NrliReportHandler),
             (r"/map",MapSocketHandler),
+            (r"/get-danger",GetDangerHandler),
         ]
 
+settings = dict(
+            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "static"),
+        )
 
-
-application = tornado.web.Application(handlers)
+application = tornado.web.Application(handlers, **settings)
 
 application.listen(7654, '0.0.0.0')
 
