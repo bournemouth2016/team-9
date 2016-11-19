@@ -6,9 +6,7 @@ ws.onopen = function(){
     // ws.send("Sent message ok");
 };
 
-ws.onmessage = function(event) {
-  console.log(JSON.parse(event.data)['key'])
-};
+
 
   var mymap = L.map('mapid').setView([51.505, -0.09], 13);
   L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -18,8 +16,12 @@ ws.onmessage = function(event) {
       accessToken: 'your.mapbox.public.access.token'
   }).addTo(mymap);
 
+  ws.onmessage = function(event) {
+  var value = JSON.parse(event.data)['key'];
+  console.log(JSON.parse(event.data)['key'])
   var marker = L.marker([51.5, -0.09]).addTo(mymap);
-  marker.bindPopup("<strong>Name:</strong><br><strong>Telephone:</strong>").openPopup();
+  marker.bindPopup("<strong>Name: </strong>" + value + " <br><strong>Telephone:</strong>").openPopup();
+};
   // marker.on("click",function(event){
 
   // });
