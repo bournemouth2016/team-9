@@ -35,5 +35,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 r.printStackTrace();
             }
         }
+        if(v.getId()==R.id.btnLogin){
+            try{
+                Intent home = new Intent(this, Home.class);
+                startActivity(home);
+            }
+            catch(Exception r){
+                r.printStackTrace();
+            }
+        }
     }
 }

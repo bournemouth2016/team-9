@@ -1,9 +1,13 @@
 package teamnine.pay.apps.teamnine;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.os.Bundle;
+import android.support.v7.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
@@ -29,6 +33,7 @@ public class GCMIntent extends IntentService {
         try {
             if (!extras.isEmpty()) {
                 System.out.println(extras.toString());
+                sendNotif(extras.toString());
             }
 
             GcmBroadcastReceiver.completeWakefulIntent(intent);
@@ -37,5 +42,25 @@ public class GCMIntent extends IntentService {
             r.printStackTrace();
         }
 
+    }
+
+    public void sendNotif(String message){
+        NotificationManager nm = (NotificationManager)getBaseContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        long[] vibrate_ptn = {0, 100, 300, 500};
+
+        Long timestamp = System.currentTimeMillis()/1000;
+
+        System.out.println("Timestamp is: "+timestamp);
+
+        NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(getBaseContext())
+                .setSmallIcon(R.drawable.app_icon)
+                .setContentTitle("Alert!")
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setVibrate(vibrate_ptn)
+                .setOngoing(true);
+                //.setAutoCancel(true)
+        //mBuilder.setContentIntent(resultPendingIntent);
+        nm.notify(Integer.parseInt(timestamp.toString()), mBuilder.build());
     }
 }
