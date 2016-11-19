@@ -21,17 +21,17 @@
         android:id="@+id/txtBoatImage" />
 
     <android.support.design.widget.TextInputLayout
-        android:id="@+id/input_layout_phone"
+        android:id="@+id/input_layout_location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/enterPhone"
-            android:hint="@string/phone"
+            android:id="@+id/enterLocation"
+            android:hint="@string/location"
             android:layout_gravity="center_horizontal"
-            android:inputType="phone"/>
+            android:inputType="text"/>
 
     </android.support.design.widget.TextInputLayout>
 

@@ -14,4 +14,6 @@
     <string name="vesseltype">Boat Type</string>
     <string name="maxcap">Maximum capacity of boat</string>
     <string name="login">Log in</string>
+    <string name="pressemg">Press bell button to call for help</string>
+    <string name="torescue">People in danger</string>
 </resources>

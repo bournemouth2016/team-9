@@ -15,6 +15,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
@@ -31,7 +33,7 @@ import teamnine.pay.apps.teamnine.connectors.JSONParser;
 
 public class RegRequired extends Fragment implements View.OnClickListener{
 
-    EditText enterfname, enterlname, enterlocation, enterboatname, enterpassword, enterrpassword;
+    EditText enterfname, enterlname, enterphone, enterboatname, enterpassword, enterrpassword;
 
     Button btnRegister;
 
@@ -47,6 +49,11 @@ public class RegRequired extends Fragment implements View.OnClickListener{
 
     JSONParser jsonParser = new JSONParser();
 
+    //for GCM
+    String ProjectNumber = "720117046048";
+    GoogleCloudMessaging gcm;
+    String registration_id;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +68,7 @@ public class RegRequired extends Fragment implements View.OnClickListener{
 
         enterfname = (EditText)rootView.findViewById(R.id.enterFName);
         enterlname = (EditText)rootView.findViewById(R.id.enterLName);
-        enterlocation = (EditText)rootView.findViewById(R.id.enterLocation);
+        enterphone = (EditText)rootView.findViewById(R.id.enterPhone);
         enterboatname = (EditText)rootView.findViewById(R.id.enterBoat);
         enterpassword = (EditText)rootView.findViewById(R.id.enterPass);
         enterrpassword = (EditText)rootView.findViewById(R.id.enterRPass);
@@ -80,11 +87,11 @@ public class RegRequired extends Fragment implements View.OnClickListener{
             System.out.println("Register pressed!");
             try{
                 //validate
-                if(enterfname.getText().length()>0 && enterlname.getText().length()>0 && enterlocation.getText().length()>0 &&
+                if(enterfname.getText().length()>0 && enterlname.getText().length()>0 && enterphone.getText().length()>0 &&
                         enterboatname.getText().length()>0 && enterpassword.getText().length()>0 && enterrpassword.getText().length()>0){
 
                     if(enterpassword.getText().toString().equals(enterrpassword.getText().toString())){
-                        new registerMe(enterfname.getText().toString(), enterlname.getText().toString(), enterlocation.getText().toString(), enterboatname.getText().toString(),
+                        new registerMe(enterfname.getText().toString(), enterlname.getText().toString(), enterphone.getText().toString(), enterboatname.getText().toString(),
                                 enterpassword.getText().toString()).execute();
                     }
                     else{
@@ -115,10 +122,10 @@ public class RegRequired extends Fragment implements View.OnClickListener{
             details = new ArrayList<NameValuePair>();
             details.add(new BasicNameValuePair("owner_fname", fname));
             details.add(new BasicNameValuePair("owner_lname", lname));
-            details.add(new BasicNameValuePair("location", location));
+            details.add(new BasicNameValuePair("location", ""));
             details.add(new BasicNameValuePair("boat_name", boat));
             details.add(new BasicNameValuePair("password", password));
-            details.add(new BasicNameValuePair("phone", ""));
+            details.add(new BasicNameValuePair("phone", "123456"));
             details.add(new BasicNameValuePair("max_passengers", "0"));
             details.add(new BasicNameValuePair("vessel_type", ""));
         }
@@ -136,6 +143,15 @@ public class RegRequired extends Fragment implements View.OnClickListener{
         @Override
         protected String doInBackground(String... params) {
             try {
+
+                //create GCM key
+                gcm = GoogleCloudMessaging.getInstance(getActivity());
+                registration_id = gcm.register(ProjectNumber);
+                Log.d("GcmIntentService", "Device registered, registration ID=" + registration_id);
+                System.out.println("GCM is: "+registration_id);
+
+                details.add(new BasicNameValuePair("gcm_id", registration_id));
+
                 // getting JSON Object
                 JSONObject json = jsonParser.makeHttpRequest(Config.SERVER_URL+"register",
                         "POST", details);
@@ -144,7 +160,7 @@ public class RegRequired extends Fragment implements View.OnClickListener{
                 Log.d("Create Response", json.toString());
 
                 // check for success tag
-                success = json.getInt("status");
+                //success = json.getString("status");
                 response = json.getString("status");
                 System.out.println(response);
 
