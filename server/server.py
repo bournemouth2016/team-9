@@ -121,8 +121,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
             passengers = int(passengers)
         else:
             passengers = None
-
-        db['boats'].insert_one({
+        response = db['boats'].insert_one({
             'location': self.get_argument('location',''),
             'vessel_type': self.get_argument('vessel_type',''),
             'max_passengers': passengers,
@@ -133,6 +132,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
             'phone': self.get_argument('phone',''),
             'gcm_id': self.get_argument('gcm_id',''),
         })
+        print response
         self.write({'status':'ok'})
 
 class RescueHandler(tornado.web.RequestHandler):
