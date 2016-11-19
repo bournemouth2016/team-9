@@ -6,11 +6,11 @@ import re
 from gcm import GCM
 import hashlib
 import os
+from bson.objectid import ObjectId
 
 client = MongoClient('localhost',27017)
 db = client['codeforgood']
 gsm_api_key = "AIzaSyCNubwDzGzQ762X22dnh-rvn7btvjrrYBk"
-# gsm_reg_ids = []
 gcm = GCM(gsm_api_key, debug=False)
 
 websocket_clients = set()
@@ -20,6 +20,7 @@ def push_data(data,ids):
     return response
 
 def get_gps(gps):
+    # print gps
     if len(gps) < 2:
         return []
     gps_split = gps.split(',')
@@ -35,8 +36,18 @@ class MainHandler(tornado.web.RequestHandler):
         # self.write("aada")
         self.render("index.html")
 
+class CancelDangerHandler(tornado.web.RequestHandler):
+    def post(self):
+        print "POST /canceldanger request from", self.request.remote_ip
+        incident_id = self.get_argument('incident_id','')
+        db['incidents'].update({'_id':ObjectId(incident_id)},{'$set':{
+            'status':'closed'
+        }})
+        self.write({'status':'ok'})
+
 class DangerHandler(tornado.web.RequestHandler):
     def post(self):
+        print "POST /danger request from", self.request.remote_ip
         gps = self.get_argument('gps',[])
         passengers = self.get_argument('max_passengers','')
         if passengers != '':
@@ -51,7 +62,7 @@ class DangerHandler(tornado.web.RequestHandler):
 
         gps_json = { 'type': 'Point', 'coordinates': get_gps(gps) }
 
-        db['incidents'].insert_one({
+        incident = db['incidents'].insert_one({
             'phone': self.get_argument('phone',''),
             'gps' : gps_json,
             # 'picture': self.get_argument('picture',''),
@@ -77,15 +88,10 @@ class DangerHandler(tornado.web.RequestHandler):
         #     }
         # }).limit(10)
 
-        # print [get_gps(gps)[0], get_gps(gps)[1]]
-        # print res
-        # print res.next()
-        # print res.count()
-
-        print get_gps(gps)
+        # print get_gps(gps)
         if res.count() > 0:
             people = [i['gcm_id'] for i in res]
-            print people
+            # print people
             push_data({
             'phone':self.get_argument('phone',''),
             'gps': str(get_gps(gps)),
@@ -100,15 +106,16 @@ class DangerHandler(tornado.web.RequestHandler):
                 'phone':self.get_argument('phone',''),
                 'owner':owner
             })
+        # print (incident.inserted_id)
 
         self.write({
-            'status':'ok'
+            'status':'ok',
+            'incident_id':str(incident.inserted_id),
         })
-
 
 class RegistrationHandler(tornado.web.RequestHandler):
     def post(self):
-
+        print "POST /register request from", self.request.remote_ip
         passengers = self.get_argument('max_passengers','')
         if passengers != '':
             passengers = int(passengers)
@@ -131,14 +138,10 @@ class RegistrationHandler(tornado.web.RequestHandler):
 class RescueHandler(tornado.web.RequestHandler):
     def post(self):
         pass
-        # gps = self.get_argument('gps',[])
-        # db['boats'].insert_one({
-        #     'gps' : get_gps(gps),
-        #     'rescuer_id' : self.get_argument('rescuer_id',''),
-        # })
 
 class LoginHandler(tornado.web.RequestHandler):
     def post(self):
+        print "POST /login request from", self.request.remote_ip
         phone = self.get_argument('phone','')
         password = self.get_argument('password','')
         res = db['boats'].find({
@@ -150,6 +153,7 @@ class LoginHandler(tornado.web.RequestHandler):
 
 class NrliReportHandler(tornado.web.RequestHandler):
     def get(self):
+        print "GET /nrli-report request from", self.request.remote_ip
         total_incidents = db['incidents'].find().count()
         total_incidents_false = db['incidents'].find({'status':'false'}).count()
         total_responders_list = db['incidents'].find({'rescuers': { '$gt': 0}})
@@ -165,6 +169,7 @@ class NrliReportHandler(tornado.web.RequestHandler):
 
 class TripHandler(tornado.web.RequestHandler):
     def post(self):
+        print "POST /trips request from", self.request.remote_ip
         db['trips'].insert_one({
             'phone': self.get_argument('phone',''),
             'status': self.get_argument('status',''),
@@ -175,6 +180,7 @@ class TripHandler(tornado.web.RequestHandler):
 
 class GetDangerHandler(tornado.web.RequestHandler):
     def get(self):
+        print "GET /indanger request from", self.request.remote_ip
         response = db['incidents'].find({'status':'danger'})
         results = []
         for item in response:
@@ -214,6 +220,7 @@ handlers = [
             (r"/map",MapSocketHandler),
             (r"/indanger",GetDangerHandler),
             (r"/trip",TripHandler),
+            (r"/canceldanger",CancelDangerHandler),
         ]
 
 settings = dict(
