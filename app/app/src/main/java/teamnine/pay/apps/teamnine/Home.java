@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -57,6 +58,7 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
     ImageView panicButton;
 
     LocationManager locationManager;
+    GoogleApiClient mGoogleApiClient;
 
     List<NameValuePair> details;
 
@@ -86,14 +88,14 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
         panicButton = (ImageView) findViewById(R.id.imgPanic);
         panicButton.setOnClickListener(this);
 
-        btnTrip = (Button)findViewById(R.id.btnTrip);
+        btnTrip = (Button) findViewById(R.id.btnTrip);
         btnTrip.setOnClickListener(this);
 
         btnRescue = (Button) findViewById(R.id.btnRescue);
         btnRescue.setText("People in danger: 0");
         btnRescue.setOnClickListener(this);
 
-        layoutHome = (LinearLayout)findViewById(R.id.layoutHome);
+        layoutHome = (LinearLayout) findViewById(R.id.layoutHome);
 
         try {
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -108,34 +110,60 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
                 System.out.println("I REACHED HERE!!!");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions( permissions.toArray( new String[permissions.size()] ), 101 );
+                    requestPermissions(permissions.toArray(new String[permissions.size()]), 101);
                 }
+            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 100, this);
 
-                //check if coordinates passed to close
-                if(getIntent().getStringExtra("incID")!=null){
-                    System.out.println("I REACHED HERE");
-                    incID = getIntent().getStringExtra("incID").toString();
-                    new cancelDanger(incID).execute();
-                }
+            // Create an instance of GoogleAPIClient.
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this, new GoogleApiClient.OnConnectionFailedListener() {
+                        @Override
+                        public void onConnectionFailed(ConnectionResult conresult) {
+                            Toast.makeText(getBaseContext(), conresult.toString(), Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .addApi(LocationServices.API)
+                    .build();
+
+            //check if coordinates passed to close
+            if (getIntent().getStringExtra("incID") != null) {
+                System.out.println("I REACHED HERE");
+                incID = getIntent().getStringExtra("incID").toString();
+                new cancelDanger(incID).execute();
             }
-            else{
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 100, this);
-            }
-        }
-        catch(Exception r){
+
+        } catch (Exception r) {
             r.printStackTrace();
         }
 
     }
 
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         //check if coordinates passed to close
-        if(getIntent().getStringExtra("incID")!=null){
+        if (getIntent().getStringExtra("incID") != null) {
             System.out.println("I REACHED HERE");
             incID = getIntent().getStringExtra("incID").toString();
             new cancelDanger(incID).execute();
         }
+
+        //Request location updates
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 100, this);
+    }
+
+    public void onPause() {
+        super.onPause();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+        }
+        locationManager.removeUpdates(this);
     }
 
     @Override
@@ -174,8 +202,6 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //get lat and long
-                        getCoordinates();
 
                         System.out.println("Coordinates: "+coords.toString());
 
@@ -183,7 +209,19 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
                             new sendEmergencyNotif(coords).execute();
                         }
                         else{
-                            Toast.makeText(getBaseContext(), "Could not get coordinates. Please try again", Toast.LENGTH_LONG).show();
+                            System.out.println("No coordinates so plan b");
+                            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                                    mGoogleApiClient);
+                            coords.add(mLastLocation.getLatitude());
+                            coords.add(mLastLocation.getLongitude());
+                            System.out.println("Latitude is: "+mLastLocation.getLatitude());
+
+                            if(coords.size()>0){
+                                new sendEmergencyNotif(coords).execute();
+                            }
+                            else{
+                                Toast.makeText(getBaseContext(), "Could not get coordinates. Please try again", Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
                 });
@@ -228,7 +266,8 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
 
     @Override
     public void onLocationChanged(Location location) {
-        //System.out.println("Latitude is: "+location.getLatitude());
+        System.out.println("Latitude is: "+location.getLatitude());
+
         coords.clear();
         coords.add(location.getLatitude());
         coords.add(location.getLongitude());
@@ -621,35 +660,6 @@ public class Home extends AppCompatActivity implements View.OnClickListener, Loc
         }
         catch(Exception r){
             r.printStackTrace();
-        }
-    }
-
-    public void getCoordinates(){
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED) {
-
-            List<String> permissions = new ArrayList<String>();
-            permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
-            permissions.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
-            permissions.add(android.Manifest.permission.VIBRATE);
-
-            System.out.println("I REACHED HERE!!!");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions( permissions.toArray( new String[permissions.size()] ), 101 );
-            }
-            //return;
-        }else{
-            System.out.println("Hooray I ALSO reached here!!");
-            //check if user has activate location/GPS
-            /*if(!locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER )){
-                buildAlertMessageNoGps();
-            }*/
-            //else{
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 100, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-
-            //}
         }
     }
 }
